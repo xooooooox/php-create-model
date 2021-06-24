@@ -1,0 +1,124 @@
+<?php
+
+
+namespace app\model;
+
+
+use support\Model as BaseModel;
+
+
+/**
+ * %s %s
+ * Class Test
+ * @package app\model
+ */
+class %s extends BaseModel
+{
+
+    /**
+     * @var string
+     */
+    protected $table = '%s';
+
+
+    /**
+     * @param array $insert
+     * @return int
+     */
+    public static function AddOne(array $insert = []) : int {
+        if ($insert === []){
+            return 0;
+        }
+        return static::query()->insertGetId($insert);
+    }
+
+    /**
+     * @param int $id
+     * @return int
+     */
+    public static function DelOne(int $id) : int {
+        $rows = static::query()
+            ->where('id',$id)
+            ->delete();
+        if (!is_int($rows)){
+            return 0;
+        }
+        return $rows;
+    }
+
+    /**
+     * @param int $id
+     * @param array $update
+     * @return int
+     */
+    public static function ModOne(int $id, array $update = []) : int {
+        if ($update === []){
+            return 0;
+        }
+        $rows = static::query()
+            ->where('id',$id)
+            ->update($update);
+        if (!is_int($rows)){
+            return 0;
+        }
+        return $rows;
+    }
+
+    /**
+     * @param int $id
+     * @return bool
+     */
+    public static function Exists(int $id) : bool {
+        $first = static::query()
+            ->where('id',$id)
+            ->first(['id']);
+        if (is_null($first)){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function AscFirst(int $id, array $cols = ['*']) : array {
+        $first = static::query()
+            ->where('id',$id)
+            ->orderBy('id')
+            ->first($cols);
+        if (is_null($first)){
+            return [];
+        }
+        return $first->toArray();
+    }
+
+    /**
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function DescFirst(int $id, array $cols = ['*']) : array {
+        $first = static::query()
+            ->where('id',$id)
+            ->orderByDesc('id')
+            ->first($cols);
+        if (is_null($first)){
+            return [];
+        }
+        return $first->toArray();
+    }
+
+    /**
+     * @param object $object
+     * @return array
+     */
+    public static function QueryObjectToArray(object $object) : array {
+        if (is_null($object)){
+            return [];
+        }
+        return $object->toArray();
+    }
+
+}
