@@ -4,6 +4,8 @@
 namespace app\model;
 
 
+use \Closure;
+use \Throwable;
 use support\Model as BaseModel;
 
 
@@ -122,6 +124,42 @@ class %s extends BaseModel
             return [];
         }
         return $first->toArray();
+    }
+
+    /**
+     * database transaction
+     * @param Closure $callback need return bool value, true auto commit, and false auto rollback
+     * @param Closure $except  handle the exception information thrown, value is getMessage()
+     * @param int $attempts attempts times
+     * @return bool result of transaction execute
+     */
+    public static function Transaction(Closure $callback, Closure $except, int $attempts = 1) : bool  {
+        if ($attempts > 3){
+            $attempts = 3;
+        }
+        if ($attempts <= 0) {
+            return false;
+        }
+        try {
+            $attempts--;
+            $conn = static::query()->getConnection();
+            $conn->beginTransaction();
+            $success = $callback($conn);
+            if ($success === true){
+                $conn->commit();
+            }else{
+                $conn->rollBack();
+            }
+        }catch(Throwable $e){
+            if (is_callable($except)){
+                $except($e->getMessage());
+            }
+            $success = false;
+        }
+        if ($success === false && $attempts > 0){
+            return static::Transaction($callback,$except,$attempts);
+        }
+        return $success;
     }
 
 }
