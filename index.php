@@ -64,8 +64,10 @@ $options = [
 ];
 // 模型文件写入磁盘地址, 注意以 '/' 结尾方便拼接模型文件路径
 $model_write_dir = './model/';
+$assoc_write_dir = './assoc/';
 $pdo = db($host,$port,$dbname,$username,$password,$options);
 
+// 所有表
 $GetAllTableSql = sprintf("SELECT * FROM `information_schema`.`TABLES` WHERE ( `TABLE_SCHEMA` = '%s' AND `TABLE_TYPE` = 'BASE TABLE' );", $dbname);
 $tables = $pdo->query($GetAllTableSql)->fetchAll();
 
@@ -76,12 +78,48 @@ $ModelTemplate = file_get_contents('./model.tmp');
 if (!is_dir($model_write_dir)){
     mkdir($model_write_dir,0755,true);
 }
+if (!is_dir($assoc_write_dir)){
+    mkdir($assoc_write_dir,0755,true);
+}
 
-foreach ($tables as $t){
-    $table = $t['TABLE_NAME'];
-    $comment = $t['TABLE_COMMENT'];
+foreach ($tables as $ts){
+    $table = $ts['TABLE_NAME'];
+    $comment = $ts['TABLE_COMMENT'];
     $TableUnderlineToPascal = UnderlineToPascal($table);
+
+    // 写入模型文件
     // 模型模板内容 注释表名 注释表注释 类名注释 类名 属性表名
     $content = sprintf($ModelTemplate,$table,$comment,$TableUnderlineToPascal,$TableUnderlineToPascal,$table);
     file_put_contents($model_write_dir.$TableUnderlineToPascal.'.php',$content);
+
+    // 写入关联数据结构文件
+    $GetAllColumnSql = sprintf("SELECT * FROM `information_schema`.`COLUMNS` WHERE ( `TABLE_SCHEMA` = '%s' AND `TABLE_NAME` = '%s' );", $dbname, $table);
+    $columns = $pdo->query($GetAllColumnSql)->fetchAll();
+
+    $content = $table."\n[\n";
+    foreach ($columns as $cs){
+        $DataType = strtolower($cs['DATA_TYPE']);
+        $NeedQuotMark = true;
+        if (strpos($DataType,'int') !== false){
+            $NeedQuotMark = false;
+        }
+        if (strpos($DataType,'float') !== false){
+            $NeedQuotMark = false;
+        }
+        if (strpos($DataType,'double') !== false){
+            $NeedQuotMark = false;
+        }
+        if (strpos($DataType,'decimal') !== false){
+            $NeedQuotMark = false;
+        }
+        $content .= "\t'".$cs['COLUMN_NAME']."' => ";
+        if ($NeedQuotMark){
+            $content .= '\'\'';
+        }else{
+            $content .= '0';
+        }
+        $content .= "\n";
+    }
+    $content .= "]";
+    file_put_contents($assoc_write_dir.$table.'.assoc',$content);
 }
