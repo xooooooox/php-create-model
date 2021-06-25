@@ -81,7 +81,7 @@ foreach ($tables as $t){
     $table = $t['TABLE_NAME'];
     $comment = $t['TABLE_COMMENT'];
     $TableUnderlineToPascal = UnderlineToPascal($table);
-    // 模型模板内容 注释表名 注释表注释 类名 属性表名
-    $content = sprintf($ModelTemplate,$table,$comment,$TableUnderlineToPascal,$table);
+    // 模型模板内容 注释表名 注释表注释 类名注释 类名 属性表名
+    $content = sprintf($ModelTemplate,$table,$comment,$TableUnderlineToPascal,$TableUnderlineToPascal,$table);
     file_put_contents($model_write_dir.$TableUnderlineToPascal.'.php',$content);
 }

@@ -11,7 +11,7 @@ use support\Model as BaseModel;
 
 /**
  * %s %s
- * Class Test
+ * Class %s
  * @package app\model
  */
 class %s extends BaseModel
