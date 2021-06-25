@@ -124,15 +124,4 @@ class %s extends BaseModel
         return $first->toArray();
     }
 
-    /**
-     * @param object $object
-     * @return array
-     */
-    public static function QueryObjectToArray(object $object) : array {
-        if (is_null($object)){
-            return [];
-        }
-        return $object->toArray();
-    }
-
 }
