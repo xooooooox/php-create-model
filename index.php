@@ -51,7 +51,6 @@ function UnderlineToPascal(string $str) : string {
  * @return PDO
  */
 function db(string $host = '127.0.0.1',int $port = 3306, string $dbname = 'test', string $username = 'root', string $password = '', array $options = [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]) : PDO {
-
     return new PDO('mysql:host='.$host.';port='.$port.';dbname='.$dbname,$username,$password,$options);
 }
 
