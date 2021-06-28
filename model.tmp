@@ -265,4 +265,17 @@ class %s extends BaseModel
         return static::ObjectToArray($first);
     }
 
+    /**
+     * @param array ...$arrays
+     * @return bool
+     */
+    public static function HasEmptyArray(array ...$arrays) : bool {
+        foreach ($arrays as $v){
+            if (is_array($v) && $v === []){
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
