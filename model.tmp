@@ -39,10 +39,10 @@ class %s extends BaseModel
 
 
     /**
-     * @param object|null $object
+     * @param object|null|array $object
      * @return array
      */
-    public static function ObjectToArray(object|null $object) : array {
+    public static function ObjectToArray(object|null|array $object) : array {
         $bag = json_decode(json_encode($object),true);
         if (!is_array($bag)){
             return [];
