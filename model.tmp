@@ -175,7 +175,7 @@ class %s extends BaseModel
      * @param array $insert
      * @return int
      */
-    public static function ConnectAddOne(Connection $conn, array $insert = []) : int {
+    public static function CntAddOne(Connection $conn, array $insert = []) : int {
         if ($insert === []){
             return 0;
         }
@@ -187,7 +187,7 @@ class %s extends BaseModel
      * @param int $id
      * @return int
      */
-    public static function ConnectDelOne(Connection $conn, int $id) : int {
+    public static function CntDelOne(Connection $conn, int $id) : int {
         $rows = $conn->query()
             ->where('id',$id)
             ->delete();
@@ -203,7 +203,7 @@ class %s extends BaseModel
      * @param array $update
      * @return int
      */
-    public static function ConnectModOne(Connection $conn, int $id, array $update = []) : int {
+    public static function CntModOne(Connection $conn, int $id, array $update = []) : int {
         if ($update === []){
             return 0;
         }
@@ -221,7 +221,7 @@ class %s extends BaseModel
      * @param int $id
      * @return bool
      */
-    public static function ConnectExists(Connection $conn, int $id) : bool {
+    public static function CntExists(Connection $conn, int $id) : bool {
         $first = $conn->query()
             ->where('id',$id)
             ->first(['id']);
@@ -238,7 +238,7 @@ class %s extends BaseModel
      * @param array|string[] $cols
      * @return array
      */
-    public static function ConnectAscFirst(Connection $conn, int $id, array $cols = ['*']) : array {
+    public static function CntAscFirst(Connection $conn, int $id, array $cols = ['*']) : array {
         $first = $conn->query()
             ->where('id',$id)
             ->orderBy('id')
@@ -252,7 +252,7 @@ class %s extends BaseModel
      * @param array|string[] $cols
      * @return array
      */
-    public static function ConnectDescFirst(Connection $conn, int $id, array $cols = ['*']) : array {
+    public static function CntDescFirst(Connection $conn, int $id, array $cols = ['*']) : array {
         $first = $conn->query()
             ->where('id',$id)
             ->orderByDesc('id')
