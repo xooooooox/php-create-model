@@ -118,7 +118,7 @@ foreach ($tables as $ts){
         }else{
             $content .= '0';
         }
-        $content .= "\n";
+        $content .= ",\n";
     }
     $content .= "]";
     file_put_contents($assoc_write_dir.$table.'.assoc',$content);

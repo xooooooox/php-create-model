@@ -6,6 +6,7 @@ namespace app\model;
 
 use \Closure;
 use \Throwable;
+use Illuminate\Database\Connection;
 use support\Model as BaseModel;
 
 
@@ -36,6 +37,18 @@ class %s extends BaseModel
     protected $dateFormat = 'U';
 
 
+
+    /**
+     * @param object|null $object
+     * @return array
+     */
+    public static function ObjectToArray(object|null $object) : array {
+        $bag = json_decode(json_encode($object),true);
+        if (!is_array($bag)){
+            return [];
+        }
+        return $bag;
+    }
 
     /**
      * @param array $insert
@@ -88,10 +101,11 @@ class %s extends BaseModel
         $first = static::query()
             ->where('id',$id)
             ->first(['id']);
-        if (is_null($first)){
-            return false;
+        $bag = static::ObjectToArray($first);
+        if (isset($bag['id'])){
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -104,10 +118,7 @@ class %s extends BaseModel
             ->where('id',$id)
             ->orderBy('id')
             ->first($cols);
-        if (is_null($first)){
-            return [];
-        }
-        return $first->toArray();
+        return static::ObjectToArray($first);
     }
 
     /**
@@ -120,10 +131,7 @@ class %s extends BaseModel
             ->where('id',$id)
             ->orderByDesc('id')
             ->first($cols);
-        if (is_null($first)){
-            return [];
-        }
-        return $first->toArray();
+        return static::ObjectToArray($first);
     }
 
     /**
@@ -160,6 +168,96 @@ class %s extends BaseModel
             return static::Transaction($callback,$except,$attempts);
         }
         return $success;
+    }
+
+    /**
+     * @param Connection $conn
+     * @param array $insert
+     * @return int
+     */
+    public static function ConnectAddOne(Connection $conn, array $insert = []) : int {
+        if ($insert === []){
+            return 0;
+        }
+        return $conn->query()->insertGetId($insert);
+    }
+
+    /**
+     * @param Connection $conn
+     * @param int $id
+     * @return int
+     */
+    public static function ConnectDelOne(Connection $conn, int $id) : int {
+        $rows = $conn->query()
+            ->where('id',$id)
+            ->delete();
+        if (!is_int($rows)){
+            return 0;
+        }
+        return $rows;
+    }
+
+    /**
+     * @param Connection $conn
+     * @param int $id
+     * @param array $update
+     * @return int
+     */
+    public static function ConnectModOne(Connection $conn, int $id, array $update = []) : int {
+        if ($update === []){
+            return 0;
+        }
+        $rows = $conn->query()
+            ->where('id',$id)
+            ->update($update);
+        if (!is_int($rows)){
+            return 0;
+        }
+        return $rows;
+    }
+
+    /**
+     * @param Connection $conn
+     * @param int $id
+     * @return bool
+     */
+    public static function ConnectExists(Connection $conn, int $id) : bool {
+        $first = $conn->query()
+            ->where('id',$id)
+            ->first(['id']);
+        $bag = static::ObjectToArray($first);
+        if (isset($bag['id'])){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param Connection $conn
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function ConnectAscFirst(Connection $conn, int $id, array $cols = ['*']) : array {
+        $first = $conn->query()
+            ->where('id',$id)
+            ->orderBy('id')
+            ->first($cols);
+        return static::ObjectToArray($first);
+    }
+
+    /**
+     * @param Connection $conn
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function ConnectDescFirst(Connection $conn, int $id, array $cols = ['*']) : array {
+        $first = $conn->query()
+            ->where('id',$id)
+            ->orderByDesc('id')
+            ->first($cols);
+        return static::ObjectToArray($first);
     }
 
 }
