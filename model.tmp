@@ -19,7 +19,12 @@ class %s extends BaseModel
 {
 
     /**
-     * 实际表名
+     * 常量表名, 方便直接使用类名调用
+     */
+    const TableName = '%s';
+
+    /**
+     * 变量表名, 兼容ORM
      * @var string
      */
     protected $table = '%s';
