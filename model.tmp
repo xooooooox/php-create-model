@@ -188,7 +188,7 @@ class %s extends BaseModel
         if ($insert === []){
             return 0;
         }
-        return $conn->query()->insertGetId($insert);
+        return $conn->table(static::TableName)->insertGetId($insert);
     }
 
     /**
@@ -197,7 +197,7 @@ class %s extends BaseModel
      * @return int
      */
     public static function CntDelOne(Connection $conn, int $id) : int {
-        $rows = $conn->query()
+        $rows = $conn->table(static::TableName)
             ->where('id',$id)
             ->delete();
         if (!is_int($rows)){
@@ -216,7 +216,7 @@ class %s extends BaseModel
         if ($update === []){
             return 0;
         }
-        $rows = $conn->query()
+        $rows = $conn->table(static::TableName)
             ->where('id',$id)
             ->update($update);
         if (!is_int($rows)){
@@ -231,7 +231,7 @@ class %s extends BaseModel
      * @return bool
      */
     public static function CntExists(Connection $conn, int $id) : bool {
-        $first = $conn->query()
+        $first = $conn->table(static::TableName)
             ->where('id',$id)
             ->first(['id']);
         $bag = static::ObjectToArray($first);
@@ -248,7 +248,7 @@ class %s extends BaseModel
      * @return array
      */
     public static function CntAscFirst(Connection $conn, int $id, array $cols = ['*']) : array {
-        $first = $conn->query()
+        $first = $conn->table(static::TableName)
             ->where('id',$id)
             ->orderBy('id')
             ->first($cols);
@@ -262,7 +262,7 @@ class %s extends BaseModel
      * @return array
      */
     public static function CntDescFirst(Connection $conn, int $id, array $cols = ['*']) : array {
-        $first = $conn->query()
+        $first = $conn->table(static::TableName)
             ->where('id',$id)
             ->orderByDesc('id')
             ->first($cols);
