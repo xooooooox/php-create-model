@@ -153,6 +153,7 @@ class %s extends BaseModel
         if ($attempts <= 0) {
             return false;
         }
+        $conn = null;
         try {
             $attempts--;
             $conn = static::query()->getConnection();
@@ -164,6 +165,9 @@ class %s extends BaseModel
                 $conn->rollBack();
             }
         }catch(Throwable $e){
+            if (!is_null($conn)){
+                $conn->rollBack();
+            }
             if (is_callable($except)){
                 $except($e->getMessage());
             }
