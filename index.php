@@ -7,7 +7,7 @@ function PascalToUnderline(string $str) : string {
 	$num = strlen($str);
 	for ($i = 0; $i < $num; $i++ ){
         $d = substr($str,$i,1);
-		if ($i > 0 && $d >= 'A' && d <= 'Z' && $j) {
+		if ($i > 0 && $d >= 'A' && $d <= 'Z' && $j) {
             $tmp .= '_';
 		}
 		if ($d != '_') {
