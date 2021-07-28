@@ -141,7 +141,7 @@ class %s extends BaseModel
 
     /**
      * database transaction
-     * @param Closure $callback need return bool value, true auto commit, and false auto rollback
+     * @param Closure $callback need return bool value, return true transaction auto commit, return false or throw Exception transaction auto rollback
      * @param Closure $except  handle the exception information thrown, value is getMessage()
      * @param int $attempts attempts times
      * @return bool result of transaction execute
@@ -159,9 +159,7 @@ class %s extends BaseModel
             $attempts--;
             $conn = static::query()->getConnection();
             $conn->beginTransaction();
-            $callback($conn);
-            $conn->commit();
-            $success = true;
+            $success = $callback($conn);
         }catch(Throwable $e){
             if (!is_null($conn)){
                 $conn->rollBack();
@@ -170,10 +168,15 @@ class %s extends BaseModel
                 $except($e->getMessage());
             }
         }
-        if ($success === false && $attempts > 0){
+        if ($success === true){
+            $conn->commit();
+            return true;
+        }
+        $conn->rollBack();
+        if ($attempts > 0){
             return static::Transaction($callback,$except,$attempts);
         }
-        return $success;
+        return false;
     }
 
     /**
