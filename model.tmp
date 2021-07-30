@@ -4,9 +4,11 @@
 namespace app\model;
 
 
+use Illuminate\Database\Connection;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use \Closure;
 use \Throwable;
-use Illuminate\Database\Connection;
 use support\Model as BaseModel;
 
 
@@ -44,6 +46,7 @@ class %s extends BaseModel
 
 
     /**
+	 * ObjectToArray object to array
      * @param object|null|array $object
      * @return array
      */
@@ -54,93 +57,175 @@ class %s extends BaseModel
         }
         return $bag;
     }
-
-    /**
-     * @param array $insert
-     * @return int
-     */
-    public static function AddOne(array $insert = []) : int {
-        if ($insert === []){
-            return 0;
-        }
-        return static::query()->insertGetId($insert);
-    }
-
-    /**
-     * @param int $id
-     * @return int
-     */
-    public static function DelOne(int $id) : int {
-        $rows = static::query()
-            ->where('id',$id)
-            ->delete();
-        if (!is_int($rows)){
-            return 0;
-        }
-        return $rows;
-    }
-
-    /**
-     * @param int $id
-     * @param array $update
-     * @return int
-     */
-    public static function ModOne(int $id, array $update = []) : int {
-        if ($update === []){
-            return 0;
-        }
-        $rows = static::query()
-            ->where('id',$id)
-            ->update($update);
-        if (!is_int($rows)){
-            return 0;
-        }
-        return $rows;
-    }
-
-    /**
-     * @param int $id
+	
+	/**
+	 * HasEmptyArray has empty array
+     * @param array ...$arrays
      * @return bool
      */
-    public static function Exists(int $id) : bool {
-        $first = static::query()
-            ->where('id',$id)
-            ->first(['id']);
-        $bag = static::ObjectToArray($first);
-        if (isset($bag['id'])){
-            return true;
+    public static function HasEmptyArray(array ...$arrays) : bool {
+        foreach ($arrays as $v){
+            if (is_array($v) && $v === []){
+                return true;
+            }
         }
         return false;
     }
 
     /**
+	 * AddOne insert one
+     * @param array $insert
+     * @return int
+     */
+    public static function AddOne(array $insert = []) : int {
+        if (static::HasEmptyArray($insert)){
+            return 0;
+        }
+        return static::query()->insertGetId($insert);
+    }
+	
+	/**
+     * AddMany insert many rows
+     * @param array ...$insert
+     * @return bool
+     */
+    public static function AddMany(array ...$insert) : bool {
+        return static::query()->insert($insert);
+    }
+
+    /**
+     * Del delete zero, one or more rows
+     * @param EloquentBuilder|int $where
+     * @return int
+     */
+    public static function Del(EloquentBuilder|int $where) : int {
+        if (is_int($where)){
+            $result = static::query()->where('id', $where)->delete();
+        }else{
+            $result = $where->delete();
+        }
+        if (is_int($result)){
+            return $result;
+        }
+        return 0;
+    }
+
+    /**
+     * Mod update zero, one or more rows
+     * @param EloquentBuilder|int $where
+     * @param array $update
+     * @return int
+     */
+    public static function Mod(EloquentBuilder|int $where, array $update = []) : int {
+        if (static::HasEmptyArray($update)){
+            return 0;
+        }
+        if (is_int($where)){
+            $result = static::query()->where('id', $where)->update($update);
+        }else{
+            $result = $where->update($update);
+        }
+        if (is_int($result)){
+            return $result;
+        }
+        return 0;
+    }
+
+    /**
+     * Exists records is exists
+     * @param EloquentBuilder|int $exist
+     * @return bool
+     */
+    public static function Exists(EloquentBuilder|int $exist) : bool {
+        if (is_int($exist)){
+            return static::query()->where('id', $exist)->exists();
+        }
+        return $exist->exists();
+    }
+	
+	/**
+	 * First query first one
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function First(array $cols = ['*']) : array {
+        return static::ObjectToArray(static::query()->first($cols));
+    }
+
+	/**
+	 * FirstId query first one by id
      * @param int $id
      * @param array|string[] $cols
      * @return array
      */
-    public static function AscFirst(int $id, array $cols = ['*']) : array {
-        $first = static::query()
-            ->where('id',$id)
-            ->orderBy('id')
-            ->first($cols);
-        return static::ObjectToArray($first);
+    public static function FirstId(int $id, array $cols = ['*']) : array {
+        return static::ObjectToArray(static::query()->where('id', $id)->orderBy('id')->first($cols));
     }
-
-    /**
+	
+	/**
+	 * FirstIdDesc query first one by id desc
      * @param int $id
      * @param array|string[] $cols
      * @return array
      */
-    public static function DescFirst(int $id, array $cols = ['*']) : array {
-        $first = static::query()
-            ->where('id',$id)
-            ->orderByDesc('id')
-            ->first($cols);
-        return static::ObjectToArray($first);
+    public static function FirstIdDesc(int $id, array $cols = ['*']) : array {
+        return static::ObjectToArray(static::query()->where('id', $id)->orderByDesc('id')->first($cols));
+    }
+	
+	/**
+     * FirstUniqueEqual query first one by unique column value, does not support null value query
+     * @param string $column
+     * @param string|int|null $value
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function FirstUniqueEqual(string $column, string|int|null $value = null, array $cols = ['*']) : array {
+        if (is_null($value)){
+            return [];
+        }
+        return static::ObjectToArray(static::query()->where($column, '=', $value)->first($cols));
+    }
+	
+	/**
+     * Where Eloquent\Builder where
+     * @param Closure|string|array $column
+     * @param mixed|null $operator
+     * @param mixed|null $value
+     * @param string $boolean
+     * @return EloquentBuilder
+     */
+    public static function Where(Closure|string|array $column, mixed $operator = null, mixed $value = null, string $boolean = 'and') : EloquentBuilder {
+        return static::query()->where($column,$operator,$value,$boolean);
     }
 
     /**
-     * database transaction
+     * WhereFirst Eloquent\Builder query [where] first one
+     * @param EloquentBuilder|null $builder
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function WhereFirst(EloquentBuilder|null $builder, array $cols = ['*']) : array {
+		if (is_null($builder)){
+            return static::ObjectToArray(static::query()->first($cols));
+        }
+        return static::ObjectToArray($builder->first($cols));
+    }
+
+    /**
+     * WhereMany Eloquent\Builder query [where] many records
+     * @param EloquentBuilder|null $builder
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function WhereMany(EloquentBuilder|null $builder, array $cols = ['*']) : array {
+		if (is_null($builder)){
+            return static::ObjectToArray(static::query()->get($cols));
+        }
+        return static::ObjectToArray($builder->get($cols));
+    }
+
+    /**
+     * Transaction database transaction
      * @param Closure $callback need return bool value, return true transaction auto commit, return false or throw Exception transaction auto rollback
      * @param Closure $except  handle the exception information thrown, value is getMessage()
      * @param int $attempts attempts times
@@ -180,106 +265,270 @@ class %s extends BaseModel
     }
 
     /**
+	 * QueryAddOne
      * @param Connection $conn
      * @param array $insert
      * @return int
      */
-    public static function CntAddOne(Connection $conn, array $insert = []) : int {
-        if ($insert === []){
+    public static function QueryAddOne(Connection $conn, array $insert = []) : int {
+        if (static::HasEmptyArray($insert)){
             return 0;
         }
         return $conn->table(static::TableName)->insertGetId($insert);
     }
 
     /**
+     * QueryAddMany insert many rows
      * @param Connection $conn
-     * @param int $id
-     * @return int
+     * @param mixed ...$insert
+     * @return bool
      */
-    public static function CntDelOne(Connection $conn, int $id) : int {
-        $rows = $conn->table(static::TableName)
-            ->where('id',$id)
-            ->delete();
-        if (!is_int($rows)){
-            return 0;
-        }
-        return $rows;
+    public static function QueryAddMany(Connection $conn, array ...$insert) : bool {
+        return $conn->table(static::TableName)->insert($insert);
     }
 
     /**
+     * Del delete zero, one or more rows
      * @param Connection $conn
+     * @param QueryBuilder|int $where
+     * @return int
+     */
+    public static function QueryDel(Connection $conn, QueryBuilder|int $where) : int {
+        if (is_int($where)){
+            $result = $conn->table(static::TableName)->where('id', $where)->delete();
+        }else{
+            $result = $where->delete();
+        }
+        if (is_int($result)){
+            return $result;
+        }
+        return 0;
+    }
+
+    /**
+     * Mod update zero, one or more rows
+     * @param Connection $conn
+     * @param QueryBuilder|int $where
+     * @param array $update
+     * @return int
+     */
+    public static function QueryMod(Connection $conn, QueryBuilder|int $where, array $update = []) : int {
+        if (static::HasEmptyArray($update)){
+            return 0;
+        }
+        if (is_int($where)){
+            $result = $conn->table(static::TableName)->where('id', $where)->update($update);
+        }else{
+            $result = $where->update($update);
+        }
+        if (is_int($result)){
+            return $result;
+        }
+        return 0;
+    }
+
+    /**
+     * QueryExists query exists
+     * @param Connection $conn
+     * @param QueryBuilder|int $exist
+     * @return bool
+     */
+    public static function QueryExists(Connection $conn, QueryBuilder|int $exist) : bool {
+        if (is_int($exist)){
+            return $conn->table(static::TableName)->where('id', $exist)->exists();
+        }
+        return $exist->exists();
+    }
+
+	/**
+	 * QueryFirst query first record
+     * @param Connection $conn
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryFirst(Connection $conn, array $cols = ['*']) : array {
+        $first = $conn->table(static::TableName)->first($cols);
+        return static::ObjectToArray($first);
+    }
+
+    /**
+	 * QueryFirstId query first record by id
+	 * @param Connection $conn
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryFirstId(Connection $conn, int $id, array $cols = ['*']) : array {
+        return static::ObjectToArray($conn->table(static::TableName)->where('id', $id)->orderBy('id')->first($cols));
+    }
+	
+	/**
+	 * QueryFirstIdDesc query first record by id desc
+	 * @param Connection $conn
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryFirstIdDesc(Connection $conn, int $id, array $cols = ['*']) : array {
+        return static::ObjectToArray($conn->table(static::TableName)->where('id', $id)->orderByDesc('id')->first($cols));
+    }
+	
+	/**
+     * QueryFirstUniqueEqual query first one by unique column value, does not support null value query
+     * @param Connection $conn
+     * @param string $column
+     * @param string|int|null $value
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryFirstUniqueEqual(Connection $conn, string $column, string|int|null $value = null, array $cols = ['*']) : array {
+		if (is_null($value)){
+            return [];
+        }
+        return static::ObjectToArray($conn->table(static::TableName)->where($column, '=', $value)->first($cols));
+    }
+
+    /**
+     * QueryWhere Query\Builder query where
+     * @param Connection $conn
+     * @param Closure|string|array $column
+     * @param mixed|null $operator
+     * @param mixed|null $value
+     * @param string $boolean
+     * @return QueryBuilder
+     */
+    public static function QueryWhere(Connection $conn, Closure|string|array $column, mixed $operator = null, mixed $value = null, string $boolean = 'and') : QueryBuilder {
+        return $conn->table(static::TableName)->where($column, $operator, $value, $boolean);
+    }
+	
+    /**
+     * QueryWhereFirst Query\Builder query first record by where
+     * @param QueryBuilder $builder
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryWhereFirst(QueryBuilder $builder, array $cols = ['*']) : array {
+        return static::ObjectToArray($builder->first($cols));
+    }
+
+    /**
+     * QueryWhereMany Query\Builder query many rows
+     * @param QueryBuilder $builder
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function QueryWhereMany(QueryBuilder $builder, array $cols = ['*']) : array {
+        return static::ObjectToArray($builder->get($cols));
+    }
+	
+	
+	
+	// =============================================================================================================================
+	// ================================ the following methods will be abandoned in a future version ================================
+	// =============================================================================================================================
+	
+	/**
+	 * DelOne
+     * @param int $id
+     * @return int
+     */
+    public static function DelOne(int $id) : int {
+        return static::Del($id);
+    }
+
+    /**
+	 * ModOne
      * @param int $id
      * @param array $update
      * @return int
      */
-    public static function CntModOne(Connection $conn, int $id, array $update = []) : int {
-        if ($update === []){
-            return 0;
-        }
-        $rows = $conn->table(static::TableName)
-            ->where('id',$id)
-            ->update($update);
-        if (!is_int($rows)){
-            return 0;
-        }
-        return $rows;
+    public static function ModOne(int $id, array $update = []) : int {
+        return static::Mod($id, $update);
     }
-
-    /**
-     * @param Connection $conn
+	
+	/**
+	 * AscFirst {compatible with historical versions}
      * @param int $id
-     * @return bool
+     * @param array|string[] $cols
+     * @return array
      */
-    public static function CntExists(Connection $conn, int $id) : bool {
-        $first = $conn->table(static::TableName)
-            ->where('id',$id)
-            ->first(['id']);
-        $bag = static::ObjectToArray($first);
-        if (isset($bag['id'])){
-            return true;
-        }
-        return false;
+    public static function AscFirst(int $id, array $cols = ['*']) : array {
+        return static::FirstId($id, $cols);
     }
-
-    /**
+	
+	/**
+	 * DescFirst {compatible with historical versions}
+     * @param int $id
+     * @param array|string[] $cols
+     * @return array
+     */
+    public static function DescFirst(int $id, array $cols = ['*']) : array {
+        return static::FirstIdDesc($id, $cols);
+    }
+	
+	
+	
+	/**
+	 * CntAscFirst {compatible with historical versions}
      * @param Connection $conn
      * @param int $id
      * @param array|string[] $cols
      * @return array
      */
     public static function CntAscFirst(Connection $conn, int $id, array $cols = ['*']) : array {
-        $first = $conn->table(static::TableName)
-            ->where('id',$id)
-            ->orderBy('id')
-            ->first($cols);
-        return static::ObjectToArray($first);
+        return static::QueryFirstId($conn, $id, $cols);
     }
 
     /**
+	 * CntDescFirst {compatible with historical versions}
      * @param Connection $conn
      * @param int $id
      * @param array|string[] $cols
      * @return array
      */
     public static function CntDescFirst(Connection $conn, int $id, array $cols = ['*']) : array {
-        $first = $conn->table(static::TableName)
-            ->where('id',$id)
-            ->orderByDesc('id')
-            ->first($cols);
-        return static::ObjectToArray($first);
+        return static::QueryFirstIdDesc($conn, $id, $cols);
+    }
+	
+	/**
+	 * CntAddOne {compatible with historical versions}
+     * @param Connection $conn
+     * @param array $insert
+     * @return int
+     */
+    public static function CntAddOne(Connection $conn, array $insert = []) : int {
+		return static::QueryAddOne($conn, $insert);
     }
 
     /**
-     * @param array ...$arrays
-     * @return bool
+	 * CntDelOne {compatible with historical versions}
+     * @param Connection $conn
+     * @param int $id
+     * @return int
      */
-    public static function HasEmptyArray(array ...$arrays) : bool {
-        foreach ($arrays as $v){
-            if (is_array($v) && $v === []){
-                return true;
-            }
-        }
-        return false;
+    public static function CntDelOne(Connection $conn, int $id) : int {
+        return static::QueryDel($conn,$id);
     }
 
+    /**
+	 * CntModOne {compatible with historical versions}
+     * @param Connection $conn
+     * @param int $id
+     * @param array $update
+     * @return int
+     */
+    public static function CntModOne(Connection $conn, int $id, array $update = []) : int {
+        return static::QueryMod($conn, $id, $update);
+    }
+
+    /**
+	 * CntExists {compatible with historical versions}
+     * @param Connection $conn
+     * @param int $id
+     * @return bool
+     */
+    public static function CntExists(Connection $conn, int $id) : bool {
+		return static::QueryExists($conn, $id);
+    }
+	
 }
